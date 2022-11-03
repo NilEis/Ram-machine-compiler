@@ -99,13 +99,13 @@ csub:  INSTRUCTION_CSUB VAL         {uint16_t v[2] = {(uint16_t)DEF_CSUB, (uint1
 cmult:  INSTRUCTION_CMULT VAL       {uint16_t v[2] = {(uint16_t)DEF_CMULT, (uint16_t)$2}; fwrite(&v, sizeof(uint16_t), 2, out);printf("CMULT %d\n",$2);};
 cdiv:  INSTRUCTION_CDIV VAL         {uint16_t v[2] = {(uint16_t)DEF_CDIV, (uint16_t)$2}; fwrite(&v, sizeof(uint16_t), 2, out);printf("CDIV %d\n",$2);};
 
-goto: INSTRUCTION_GOTO VAL          {uint16_t v[2] = {(uint16_t)DEF_GOTO, (uint16_t)$2}; fwrite(&v, sizeof(uint16_t), 2, out); printf("GOTO %d\n", $2);};
+goto: INSTRUCTION_GOTO VAL          {uint16_t v[2] = {(uint16_t)DEF_GOTO, (uint16_t)$2-1}; fwrite(&v, sizeof(uint16_t), 2, out); printf("GOTO %d\n", $2-1);};
 
-if: INSTRUCTION_IF_GOTO BRACKET_LEFT VAL BRACKET_RIGHT LEQ  VAL THEN INSTRUCTION_GOTO VAL     {uint16_t v[4] = {(uint16_t)DEF_IF_LEQ_GOTO, (uint16_t)$6, DEF_GOTO, (uint16_t)$9}; fwrite(&v, sizeof(uint16_t), 2, out);printf("IF c(0) <= %d -> goto %d\n", $6, $9);}
-  | INSTRUCTION_IF_GOTO BRACKET_LEFT VAL BRACKET_RIGHT LE  VAL THEN INSTRUCTION_GOTO VAL      {uint16_t v[4] = {(uint16_t)DEF_IF_LE_GOTO, (uint16_t)$6, DEF_GOTO, (uint16_t)$9}; fwrite(&v, sizeof(uint16_t), 2, out);printf("IF c(0) < %d -> goto %d\n", $6, $9);}
-  | INSTRUCTION_IF_GOTO BRACKET_LEFT VAL BRACKET_RIGHT EQ  VAL THEN INSTRUCTION_GOTO VAL      {uint16_t v[4] = {(uint16_t)DEF_IF_EQ_GOTO, (uint16_t)$6, DEF_GOTO, (uint16_t)$9}; fwrite(&v, sizeof(uint16_t), 2, out);printf("IF c(0) = %d -> goto %d\n", $6, $9);}
-  | INSTRUCTION_IF_GOTO BRACKET_LEFT VAL BRACKET_RIGHT GE  VAL THEN INSTRUCTION_GOTO VAL      {uint16_t v[4] = {(uint16_t)DEF_IF_GE_GOTO, (uint16_t)$6, DEF_GOTO, (uint16_t)$9}; fwrite(&v, sizeof(uint16_t), 2, out);printf("IF c(0) > %d -> goto %d\n", $6, $9);}
-  | INSTRUCTION_IF_GOTO BRACKET_LEFT VAL BRACKET_RIGHT GEQ  VAL THEN INSTRUCTION_GOTO VAL     {uint16_t v[4] = {(uint16_t)DEF_IF_GEQ_GOTO, (uint16_t)$6, DEF_GOTO, (uint16_t)$9}; fwrite(&v, sizeof(uint16_t), 2, out);printf("IF c(0) >= %d -> goto %d\n", $6, $9);};
+if: INSTRUCTION_IF_GOTO BRACKET_LEFT VAL BRACKET_RIGHT LEQ  VAL THEN INSTRUCTION_GOTO VAL     {uint16_t v[4] = {(uint16_t)DEF_IF_LEQ_GOTO, (uint16_t)$6, DEF_GOTO, (uint16_t)$9-1}; fwrite(&v, sizeof(uint16_t), 4, out);printf("IF c(0) <= %d -> goto %d\n", $6, $9-1);}
+  | INSTRUCTION_IF_GOTO BRACKET_LEFT VAL BRACKET_RIGHT LE  VAL THEN INSTRUCTION_GOTO VAL      {uint16_t v[4] = {(uint16_t)DEF_IF_LE_GOTO, (uint16_t)$6, DEF_GOTO, (uint16_t)$9-1}; fwrite(&v, sizeof(uint16_t), 4, out);printf("IF c(0) < %d -> goto %d\n", $6, $9-1);}
+  | INSTRUCTION_IF_GOTO BRACKET_LEFT VAL BRACKET_RIGHT EQ  VAL THEN INSTRUCTION_GOTO VAL      {uint16_t v[4] = {(uint16_t)DEF_IF_EQ_GOTO, (uint16_t)$6, DEF_GOTO, (uint16_t)$9-1}; fwrite(&v, sizeof(uint16_t), 4, out);printf("IF c(0) = %d -> goto %d\n", $6, $9-1);}
+  | INSTRUCTION_IF_GOTO BRACKET_LEFT VAL BRACKET_RIGHT GE  VAL THEN INSTRUCTION_GOTO VAL      {uint16_t v[4] = {(uint16_t)DEF_IF_GE_GOTO, (uint16_t)$6, DEF_GOTO, (uint16_t)$9-1}; fwrite(&v, sizeof(uint16_t), 4, out);printf("IF c(0) > %d -> goto %d\n", $6, $9-1);}
+  | INSTRUCTION_IF_GOTO BRACKET_LEFT VAL BRACKET_RIGHT GEQ  VAL THEN INSTRUCTION_GOTO VAL     {uint16_t v[4] = {(uint16_t)DEF_IF_GEQ_GOTO, (uint16_t)$6, DEF_GOTO, (uint16_t)$9-1}; fwrite(&v, sizeof(uint16_t), 4, out);printf("IF c(0) >= %d -> goto %d\n", $6, $9-1);};
 end: INSTRUCTION_END                {uint16_t v[2] = {(uint16_t)DEF_END, (uint16_t)DEF_END};fwrite(&v, sizeof(uint16_t), 2, out);printf("END\n");};
 
 VAL:  INT {$$=$1;}
@@ -115,8 +115,17 @@ VAL:  INT {$$=$1;}
 int main(int argc, char**argv) {
     FILE*f = fopen(argv[1],"r");
     yyin = f;
-    out = fopen("a.out", "w");
+    out = fopen("a.out", "wb");
+    {
+      uint32_t v = 0xDECAFFEE;
+      fwrite(&v, sizeof(uint32_t), 1, out);
+    }
     yyparse();
     fclose(f);
+    uint64_t size = ftell(out)-4;
+    size /= 2;
+    fseek(out, 0, SEEK_SET);
+    fwrite(&size, sizeof(uint32_t), 1, out);
     fclose(out);
+    printf("Size: %d\n", size);
 }
