@@ -42,11 +42,14 @@ GOTO                      {return INSTRUCTION_GOTO;                             
 IF                        {return INSTRUCTION_IF_GOTO;                                                                    }
 END                       {return INSTRUCTION_END;                                                                        }
 THEN                      {return THEN;                                                                                   }
+ARRAY                     {return ARRAY;                                                                                  }
 \=                        {return EQ;                                                                                     }
 \<\=                      {return LEQ;                                                                                    }
 \>\=                      {return GEQ;                                                                                    }
 \<                        {return LE;                                                                                     }
 \>                        {return GE;                                                                                     }
+:                         {return COLON;                                                                                  }
+,                         {return COMMA;                                                                                  }
 \(                        { return BRACKET_LEFT;                                                                          }
 \)                        { return BRACKET_RIGHT;                                                                         }
 \n                        { return LINE_SEPARATOR;                                                                        }
